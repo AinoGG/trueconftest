@@ -1,12 +1,14 @@
 <template>
-    <div class="elevator-box">
-        {{ floor }}
+    <div class="elevator-box" :class="{ animate: rest }">
+        <span class="up" v-if="moveUp">^</span>
+        <div>{{ floor }}</div> 
+        <span class="down" v-if="moveDown">^</span>
     </div>
 </template>
 <script>
 export default {
     name: 'ElevatorComponent',
-    props: ['floor']
+    props: ['floor', 'rest', 'moveDown', 'moveUp']
 }
 </script>
 <style lang="scss">
@@ -22,5 +24,32 @@ export default {
     position: absolute;
     transform: translateX(-50%);
     left: 50%;
+    flex-direction: column;
+    &.animate {
+        animation: rest 3s;
+    }
+
+    .down {
+        transform: rotate(180deg);
+    }
+}
+
+@keyframes rest {
+    25% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    75% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+
 }
 </style>
