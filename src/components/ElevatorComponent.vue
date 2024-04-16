@@ -1,5 +1,5 @@
 <template>
-    <div class="elevator-box" :class="{ animate: rest }">
+    <div class="elevator-box" :class="{ animate: rest, active: active }">
         <span class="up" v-if="moveUp">^</span>
         <div>{{ floor }}</div> 
         <span class="down" v-if="moveDown">^</span>
@@ -8,7 +8,7 @@
 <script>
 export default {
     name: 'ElevatorComponent',
-    props: ['floor', 'rest', 'moveDown', 'moveUp']
+    props: ['floor', 'rest', 'moveDown', 'moveUp', 'active']
 }
 </script>
 <style lang="scss">
