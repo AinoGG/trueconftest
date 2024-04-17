@@ -3,7 +3,7 @@
         <ElevatorShaftComponent v-for="(item, i) in getShafts" :key="i" :itemShaft="item" />
         <div class="button-box">
             <button v-for="(item, i) in getFloors" :key="i + 'button'" @click="callElevator(i, true)"
-                :disabled="item.state">
+                :disabled="item.state || item.disable">
                 <div class="button-state" v-if="item.state"></div>
             </button>
         </div>
@@ -21,99 +21,119 @@ export default {
         ...mapGetters([
             'getShafts',
             'getFloors',
-            'getCallQueue',
             'getIndexActive',
             'getFloorHeight'
         ])
     },
     methods: {
-        //нажимаем кнопку вызова, передаем два параметра i - Этаж, bool - булево значение которое определяет вызов идет по нажатию или это вызов из очереди уже нажатой
         callElevator(i, bool) {
-            //включаем лампочку на кнопке
             this.getFloors[i].state = true
-
-            //если нажали из состояния покоя то пушим в очередь, если запустили из очереди, то убираем первый элемент из массива, и выключаем лампочку на этаже
             if (bool) {
                 this.$store.commit('setCallQueue', i)
+                this.startMove()
             } else {
-                this.$store.commit('setCallQueue', null)
-                this.getFloors[i].state = false
+                this.startMove()
             }
-            //если состояние покоя отмигалось, то запускаем лифт дальше
-            if (!this.getShafts[this.getIndexActive].restStatus) {
-                this.moveLift()
-            }
-            console.log(this.getCallQueue)
-
+            localStorage.setItem('shafts', JSON.stringify(this.getShafts))
         },
-        moveLift() {
-            //тут проходимся по очереди этажей, на самом деле можно было просто текущий первый элемент из очереди брать, потому что все равно nextCall становится фолс при запуске любого из условий и цикл дальше не идет, но сначала другая идея реализации была. Это первый кандидат на рефакторинг
-            if (this.getShafts[this.getIndexActive].nextCall) {
-                //смотрим разница этажей положительная едем вверх, если отрицательная - вниз, позже сделал дизейбл кнопок если кабина на этаже вызова, но функционал уведомления оставил
-                if (this.getCallQueue[0] - this.getShafts[this.getIndexActive].currentFloor > 0) {
-                    this.liftMoveUp(this.getCallQueue[0])
-                } else if (this.getCallQueue[0] - this.getShafts[this.getIndexActive].currentFloor < 0) {
-                    this.liftMoveDown(this.getCallQueue[0])
-                } else if (this.getCallQueue[0] - this.getShafts[this.getIndexActive].currentFloor === 0) {
+        startMove() {
+            this.getShafts.forEach(item => {
+                if (!item.restStatus && item.callQueue.length > 0) {
+                    this.moveLift(item)
+                    console.log(item)
+                }
+            })
+        },
+        moveLift(item) {
+            if (item.nextCall) {
+                if (item.callQueue[0] - item.currentFloor > 0) {
+                    this.liftMoveUp(item.callQueue[0], item)
+                } else if (item.callQueue[0] - item.currentFloor < 0) {
+                    this.liftMoveDown(item.callQueue[0], item)
+                } else if (item.callQueue[0] - item.currentFloor === 0) {
                     console.log('lift on your floor now')
+                    this.cahngeRestStatus(item)
                 }
             }
         },
-        //движение сделал через трансформ, при запуске метода закрываем возможность циклу идти и тем самым даем остановиться на первом элементе очереди        
-        liftMoveUp(i) {
-            this.$store.commit('setNextCall', false)
-            //выбираем направление для стрелок
-            this.$store.commit('setMoveDown', false)
-            this.$store.commit('setMoveUp', true)
-            //запускаем интервал, который смотрит, если аргумент i превышает объявленную переменную, тогда стопим интервал и запускаем функции по остановке и отдыху, и разрешаем некстКолл, иначе прибавляем переменную interval
-            this.$store.commit('setInstanceInterval', setInterval(() => {
-                document.querySelector('.elevator-box.active').style.transform = `translate(-50%, -${this.getFloorHeight * this.getShafts[this.getIndexActive].interval}px)`
-                this.$store.commit('setItemCurrentFloor', this.getShafts[this.getIndexActive].interval)
-                if (this.getShafts[this.getIndexActive].interval >= i) {
-                    this.cahngeRestStatus()
-                    clearInterval(this.getShafts[this.getIndexActive].instanceInterval)
-                    this.$store.commit('setNextCall', true)
-                } else {
-                    this.$store.commit('setIntervalItemShaft', true)
-                }
-            }, 1000))
+        finishMove(item) {
+            this.getFloors[item.currentFloor].disable = true
+            localStorage.setItem('floors', JSON.stringify(this.getFloors))
+            this.cahngeRestStatus(item)
+            clearInterval(item.instanceInterval)
+            item.nextCall = true
         },
-        liftMoveDown(i) {
-            this.$store.commit('setNextCall', false)
-            this.$store.commit('setMoveDown', true)
-            this.$store.commit('setMoveUp', false)
-            this.$store.commit('setInstanceInterval', setInterval(() => {
-                document.querySelector('.elevator-box.active').style.transform = `translate(-50%, -${this.getFloorHeight * this.getShafts[this.getIndexActive].interval}px)`
-                this.$store.commit('setItemCurrentFloor', this.getShafts[this.getIndexActive].interval)
-                if (this.getShafts[this.getIndexActive].interval <= i) {
-                    this.cahngeRestStatus()
-                    clearInterval(this.getShafts[this.getIndexActive].instanceInterval)
-                    this.$store.commit('setNextCall', true)
-                } else {
-                    this.$store.commit('setIntervalItemShaft', false)
-                }
-            }, 1000))
+        arrowCheck(item, down, up) {
+            item.nextCall = false
+            item.moveDown = down
+            item.moveUp = up
+            this.getFloors[item.currentFloor].disable = false
+            localStorage.setItem('floors', JSON.stringify(this.getFloors))
         },
-        cahngeRestStatus() {
-            // ну и тут ставим статус отдыха, который передаем в пропсах в кабину, которая начинает мигать если статус тру, и через три секунды меняем статус на обратный, так же убираем все стрелки и если очередь не пустая, пускаем лифт дальше со статусом котрый не пушит новый вызов а вырезает первый, который уже исполнился и берет следующий
-            this.$store.commit('setRestStatus', true)
-            this.$store.commit('setMoveUp', false)
-            this.$store.commit('setMoveDown', false)
+        liftMoveUp(i, item) {
+            this.arrowCheck(item, false, true)
+            item.instanceInterval = setInterval(() => {
+                document.querySelector(`#${item.id}`).style.transform = `translate(-50%, -${this.getFloorHeight * item.currentFloor}px)`
+                if (item.currentFloor >= i) {
+                    this.finishMove(item)
+                } else {
+                    item.currentFloor++
+                }
+            }, 1000)
+        },
+        liftMoveDown(i, item) {
+            this.arrowCheck(item, true, false)
+            item.instanceInterval = setInterval(() => {
+                document.querySelector(`#${item.id}`).style.transform = `translate(-50%, -${this.getFloorHeight * item.currentFloor}px)`
+                if (item.currentFloor <= i) {
+                    this.finishMove(item)
+                } else {
+                    item.currentFloor--
+                }
+            }, 1000)
+        },
+        cahngeRestStatus(item) {
+            item.restStatus = true
+            item.moveDown = false
+            item.moveUp = false
+            item.callQueue = item.callQueue.slice(1)
+            localStorage.setItem('shafts', JSON.stringify(this.getShafts))
+            
             setTimeout(() => {
-                this.$store.commit('setRestStatus', false)
-                if (this.getCallQueue.length > 0) {
-                    this.callElevator(this.getCallQueue[0], false)
-                }
+                item.restStatus = false
+                this.getFloors[item.currentFloor].state = false
+                localStorage.setItem('floors', JSON.stringify(this.getFloors))
+                if (item.callQueue.length > 0) {
+                    this.callElevator(item.callQueue[0], false)
+                }                
+                
             }, 3000)
+        },
+        checkButtonDisable() {
+            this.getShafts.forEach(item => {
+                this.getFloors.forEach(floorItem => {
+                    if (item.currentFloor + 1 === floorItem.floor) {
+                        floorItem.disable = true
+                    }
+                })
+            })
         }
-
-        // похоже что звучит как-то сложновато логически, слишком много тригеров для такого маленького приложения. Но я это признаю и хочу расти и научиться грамотно разрабатывать архитектуру.
-
     },
     mounted() {
-        setTimeout(() => {
-            console.log(this.getFloorHeight)
-        }, 1000)
+
+        if (localStorage.getItem('shafts') && localStorage.getItem('floors')) {
+            this.$store.commit('setShaftObject', JSON.parse(localStorage.getItem('shafts')))
+            this.$store.commit('setFloorsState', JSON.parse(localStorage.getItem('floors')))
+            this.getShafts.forEach((item) => {
+                item.nextCall = true
+                if(item.restStatus) {
+                    this.getFloors[item.currentFloor].state = false
+                }
+                item.restStatus = false
+            })
+            this.startMove()
+            this.checkButtonDisable()
+        }
     }
 }
 </script>

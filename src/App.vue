@@ -11,9 +11,6 @@ export default {
   components: {
     HouseComponent
   },
-  mounted() {
-    this.$store.commit('setIndexActive')
-  }
 }
 </script>
 

@@ -4,8 +4,8 @@
             <div class="elevatorshaft-wrapper__box-floor" v-for="(item, i) in getFloors" :key="i" ref="floor">
 
             </div>
-            <ElevatorComponent :active="itemShaft.active" :floor="itemShaft.currentFloor + 1" :rest="itemShaft.restStatus"
-                :moveUp="itemShaft.moveUp" :moveDown="itemShaft.moveDown" ref="elevator" />
+            <ElevatorComponent :active="itemShaft.callQueue.length > 0" :floor="itemShaft.currentFloor + 1" :rest="itemShaft.restStatus"
+                :moveUp="itemShaft.moveUp" :floorH="floorHeight" :moveDown="itemShaft.moveDown" :idLift="itemShaft.id" ref="elevator" />
         </div>
 
         
@@ -20,6 +20,7 @@ export default {
     data() {
         return {
             floorHeight: 0,
+            elevatorVisible: false
         }
     },
     components: {
@@ -32,7 +33,8 @@ export default {
             'getCallQueue',
             'getShafts',
             'getFloors',
-            'getIndexActive'
+            'getIndexActive',
+            'getFloorHeight'
         ])
     },
     // methods: {
@@ -126,7 +128,7 @@ export default {
         this.$refs.elevator.$el.style.width = this.$refs.floor[0].offsetWidth - 5 + 'px'
 
         this.$store.commit('setFloorHeight', this.floorHeight)
-        
+        this.elevatorVisible = true
     }
 }
 </script>

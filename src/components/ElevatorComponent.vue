@@ -1,5 +1,5 @@
 <template>
-    <div class="elevator-box" :class="{ animate: rest, active: active }">
+    <div class="elevator-box" :class="{ animate: rest}" :id="idLift" :style="{transform: translateStyle}">
         <span class="up" v-if="moveUp">^</span>
         <div>{{ floor }}</div> 
         <span class="down" v-if="moveDown">^</span>
@@ -8,7 +8,12 @@
 <script>
 export default {
     name: 'ElevatorComponent',
-    props: ['floor', 'rest', 'moveDown', 'moveUp', 'active']
+    props: ['floor', 'rest', 'moveDown', 'moveUp', 'active', 'floorH', 'idLift'],
+    computed: {
+        translateStyle() {
+            return `translate(-50%, -${this.floorH * (this.floor - 1)}px)`
+        }
+    }
 }
 </script>
 <style lang="scss">

@@ -9,23 +9,38 @@ export const store = new Vuex.Store({
         floors: [
             {
                 floor: 1,
-                state: false
+                state: false,
+                disable: false
             },
             {
                 floor: 2,
-                state: false
+                state: false,
+                disable: false
             },
             {
                 floor: 3,
-                state: false
+                state: false,
+                disable: false
             },
             {
                 floor: 4,
-                state: false
+                state: false,
+                disable: false
             },
             {
                 floor: 5,
-                state: false
+                state: false,
+                disable: false
+            },
+            {
+                floor: 6,
+                state: false,
+                disable: false
+            },
+            {
+                floor: 7,
+                state: false,
+                disable: false
             },
         ],
         buttons: [
@@ -33,9 +48,7 @@ export const store = new Vuex.Store({
                 active: false
             },
         ],
-        callQueue: [
 
-        ],
         shafts: [
             {
                 active: true,
@@ -46,7 +59,11 @@ export const store = new Vuex.Store({
                 restStatus: false,
                 moveUp: false,
                 moveDown: false,
-                ref: 'elevator'
+                ref: 'elevator',
+                callQueue: [
+
+                ],
+                id: 'first'
             },
             {
                 active: false,
@@ -57,7 +74,56 @@ export const store = new Vuex.Store({
                 restStatus: false,
                 moveUp: false,
                 moveDown: false,
-                ref: 'elevator1'
+                ref: 'elevator1',
+                callQueue: [
+
+                ],
+                id: 'second'
+            },
+            {
+                active: false,
+                currentFloor: 0,
+                interval: 0,
+                instanceInterval: null,
+                nextCall: true,
+                restStatus: false,
+                moveUp: false,
+                moveDown: false,
+                ref: 'elevator2',
+                callQueue: [
+
+                ],
+                id: 'third'
+            },
+            {
+                active: false,
+                currentFloor: 0,
+                interval: 0,
+                instanceInterval: null,
+                nextCall: true,
+                restStatus: false,
+                moveUp: false,
+                moveDown: false,
+                ref: 'elevator2',
+                callQueue: [
+
+                ],
+                id: 'fourth'
+            },
+            {
+                active: false,
+                currentFloor: 0,
+                interval: 0,
+                instanceInterval: null,
+                nextCall: true,
+                restStatus: false,
+                moveUp: false,
+                moveDown: false,
+                ref: 'elevator2',
+                callQueue: [
+
+                ],
+                id: 'fifth'
             },
         ],
         activeIndex: 0
@@ -72,92 +138,37 @@ export const store = new Vuex.Store({
         getShafts(state) {
             return state.shafts
         },
-        getCallQueue(state) {
-            return state.callQueue
-        },
         getIndexActive(state) {
             return state.activeIndex
         },
-         getFloorHeight(state) {
+        getFloorHeight(state) {
             return state.floorHeight
-         }
+        }
     },
     mutations: {
-        setFloorHeight(state, payload) {
-            state.floorHeight = payload
+        setShaftObject(state, payload) {
+            state.shafts = payload
         },
-        setFloors(state, payload) {
+        setFloorsState(state, payload) {
             state.floors = payload
         },
-        setButtons(state, payload) {
-            state.buttons.push(payload)
-        },
-        setIntervalItemShaft(state, payload) {
-            state.shafts.forEach(item => {
-                if (item.active && payload) {
-                    item.interval++
-                } else if (item.active && !payload) {
-                    item.interval--
-                }
-            })
-        },
-        setItemCurrentFloor(state, payload) {
-            state.shafts.forEach(item => {
-                if (item.active) {
-                    item.currentFloor = payload
-                }
-            })
-        },
+        setFloorHeight(state, payload) {
+            state.floorHeight = payload
+        },               
         setCallQueue(state, payload) {
-            if (payload || payload === 0) {
-                state.callQueue.push(payload)
-            } else if (payload === null) {
-                state.callQueue = state.callQueue.slice(1)
-            }
-        },
-        setInstanceInterval(state, payload) {
+            let result = []
             state.shafts.forEach(item => {
-                if (item.active) {
-                    item.instanceInterval = payload
+                if(item.nextCall && !item.restStatus) {
+                    result.push(Math.abs(payload - item.currentFloor))
+                } else {
+                    result.push(state.floors.length)  
                 }
             })
+            console.log(result)
+            let index = result.indexOf(Math.min(...result))
+            state.shafts[index].callQueue.push(payload)  
         },
-        setNextCall(state, payload) {
-            state.shafts.forEach(item => {
-                if (item.active) {
-                    item.nextCall = payload
-                }
-            })
-        },
-        setMoveUp(state, payload) {
-            state.shafts.forEach(item => {
-                if (item.active) {
-                    item.moveUp = payload
-                }
-            })
-        },
-        setMoveDown(state, payload) {
-            state.shafts.forEach(item => {
-                if (item.active) {
-                    item.moveDown = payload
-                }
-            })
-        },
-        setRestStatus(state, payload) {
-            state.shafts.forEach(item => {
-                if (item.active) {
-                    item.restStatus = payload
-                }
-            })
-        },
-        setIndexActive(state) {
-            state.shafts.forEach((item, index) => {
-                if(item.active) {
-                    state.activeIndex = index
-                }
-                console.log(state.activeIndex)
-            })
-        }
+        
     },
     actions: {
 
