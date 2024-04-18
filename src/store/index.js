@@ -164,7 +164,6 @@ export const store = new Vuex.Store({
                     result.push(state.floors.length)  
                 }
             })
-            console.log(result)
             let index = result.indexOf(Math.min(...result))
             state.shafts[index].callQueue.push(payload)  
         },

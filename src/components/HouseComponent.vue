@@ -40,7 +40,6 @@ export default {
             this.getShafts.forEach(item => {
                 if (!item.restStatus && item.callQueue.length > 0) {
                     this.moveLift(item)
-                    console.log(item)
                 }
             })
         },
