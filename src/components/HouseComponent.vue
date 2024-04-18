@@ -7,6 +7,9 @@
                 <div class="button-state" v-if="item.state"></div>
             </button>
         </div>
+        <button class="reset-save" @click="resetSave">
+            Сбросить состояние
+        </button>
     </div>
 </template>
 <script>
@@ -75,8 +78,10 @@ export default {
                 document.querySelector(`#${item.id}`).style.transform = `translate(-50%, -${this.getFloorHeight * item.currentFloor}px)`
                 if (item.currentFloor >= i) {
                     this.finishMove(item)
+                    this.checkButtonDisable()
                 } else {
                     item.currentFloor++
+
                 }
             }, 1000)
         },
@@ -86,8 +91,10 @@ export default {
                 document.querySelector(`#${item.id}`).style.transform = `translate(-50%, -${this.getFloorHeight * item.currentFloor}px)`
                 if (item.currentFloor <= i) {
                     this.finishMove(item)
+                    this.checkButtonDisable()
                 } else {
                     item.currentFloor--
+
                 }
             }, 1000)
         },
@@ -97,18 +104,21 @@ export default {
             item.moveUp = false
             item.callQueue = item.callQueue.slice(1)
             localStorage.setItem('shafts', JSON.stringify(this.getShafts))
-            
+            this.checkButtonDisable()
             setTimeout(() => {
                 item.restStatus = false
                 this.getFloors[item.currentFloor].state = false
                 localStorage.setItem('floors', JSON.stringify(this.getFloors))
                 if (item.callQueue.length > 0) {
                     this.callElevator(item.callQueue[0], false)
-                }                
-                
+                }
+
             }, 3000)
         },
         checkButtonDisable() {
+            this.getFloors.forEach(floorItem => {
+                floorItem.disable = false
+            })
             this.getShafts.forEach(item => {
                 this.getFloors.forEach(floorItem => {
                     if (item.currentFloor + 1 === floorItem.floor) {
@@ -116,16 +126,21 @@ export default {
                     }
                 })
             })
+        },
+        resetSave() {
+            localStorage.removeItem('shafts')
+            localStorage.removeItem('floors')
+            window.location.reload()
         }
     },
     mounted() {
-
+        this.checkButtonDisable()
         if (localStorage.getItem('shafts') && localStorage.getItem('floors')) {
             this.$store.commit('setShaftObject', JSON.parse(localStorage.getItem('shafts')))
             this.$store.commit('setFloorsState', JSON.parse(localStorage.getItem('floors')))
             this.getShafts.forEach((item) => {
                 item.nextCall = true
-                if(item.restStatus) {
+                if (item.restStatus) {
                     this.getFloors[item.currentFloor].state = false
                 }
                 item.restStatus = false
@@ -168,6 +183,10 @@ export default {
                 border-radius: 50%;
             }
         }
+    }
+
+    .reset-save {
+        height: max-content;
     }
 
 }
