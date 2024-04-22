@@ -136,17 +136,22 @@ export default {
     mounted() {
         this.checkButtonDisable()
         if (localStorage.getItem('shafts') && localStorage.getItem('floors')) {
-            this.$store.commit('setShaftObject', JSON.parse(localStorage.getItem('shafts')))
-            this.$store.commit('setFloorsState', JSON.parse(localStorage.getItem('floors')))
-            this.getShafts.forEach((item) => {
-                item.nextCall = true
-                if (item.restStatus) {
-                    this.getFloors[item.currentFloor].state = false
-                }
-                item.restStatus = false
-            })
-            this.startMove()
-            this.checkButtonDisable()
+            if (JSON.parse(localStorage.getItem('shafts')).length === this.getShafts.length && JSON.parse(localStorage.getItem('floors')).length === this.getFloors.length) {
+                this.$store.commit('setShaftObject', JSON.parse(localStorage.getItem('shafts')))
+                this.$store.commit('setFloorsState', JSON.parse(localStorage.getItem('floors')))
+                this.getShafts.forEach((item) => {
+                    item.nextCall = true
+                    if (item.restStatus) {
+                        this.getFloors[item.currentFloor].state = false
+                    }
+                    item.restStatus = false
+                })
+                this.startMove()
+                this.checkButtonDisable()
+            } else {
+                this.resetSave()
+            }
+
         }
     }
 }

@@ -125,6 +125,8 @@ export const store = new Vuex.Store({
                 ],
                 id: 'fifth'
             },
+            
+            
         ],
         activeIndex: 0
     },
